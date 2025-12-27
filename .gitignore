@@ -1,10 +1,94 @@
-﻿node_modules/
-dist/
-.env
-.env.*
+
+# Dependencies
+node_modules/
+jspm_packages/
+bower_components
+
+# Database (YOUR ADDITION - IMPORTANT!)
 pgdata/
 *.db
-.DS_Store
-Thumbs.db
+*.sqlite
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Build outputs
+dist/
+build/
+.next
+out
+.nuxt
+.cache
+.parcel-cache
+.vitepress/dist
+.docusaurus
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Diagnostic reports (https://nodejs.org/api/report.html)
+report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage and testing
+coverage
+*.lcov
+.nyc_output
+.vscode-test
+
+# TypeScript
+*.tsbuildinfo
+
+# Cache directories
+.npm
+.eslintcache
+.stylelintcache
+.yarn-integrity
+
+# IDE
 .vscode/
 .idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Optional files
+.node_repl_history
+*.tgz
+
+# Framework-specific
+.serverless/
+.fusebox/
+.dynamodb/
+.firebase/
+.tern-port
+.svelte-kit/
+.temp
+
+# Yarn v3
+.pnp.*
+.yarn/*
+!.yarn/patches
+!.yarn/plugins
+!.yarn/releases
+!.yarn/sdks
+!.yarn/versions
+
+# Vite
+vite.config.js.timestamp-*
+vite.config.ts.timestamp-*
