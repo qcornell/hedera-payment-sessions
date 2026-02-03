@@ -340,19 +340,20 @@ const corsOrigins = String(env.CORS_ORIGIN ?? "")
 
 app.use(
   cors({
-    origin: (origin, cb) => {
-      // allow curl/postman/no-origin
-      if (!origin) return cb(null, true);
-
-      // if not configured, allow all (dev-friendly)
-      if (corsOrigins.length === 0) return cb(null, true);
-
-      if (corsOrigins.includes(origin)) return cb(null, true);
-      return cb(new Error(`CORS blocked: ${origin}`));
-    },
-    credentials: true
+    origin: corsOrigins,
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: [
+      "Content-Type",
+      "Authorization",
+      "x-hedera-session-id",
+      "x-idempotency-key"
+    ],
+    credentials: false
   })
 );
+
+// ⭐ THIS is what you are missing
+app.options("*", cors());
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
