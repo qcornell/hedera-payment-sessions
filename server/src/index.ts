@@ -338,22 +338,21 @@ const corsOrigins = String(env.CORS_ORIGIN ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-app.use(
-  cors({
-    origin: corsOrigins,
-    methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: [
-      "Content-Type",
-      "Authorization",
-      "x-hedera-session-id",
-      "x-idempotency-key"
-    ],
-    credentials: false
-  })
-);
+// ✅ Reuse the same options for BOTH normal requests and preflight (OPTIONS)
+const corsOptions: cors.CorsOptions = {
+  origin: corsOrigins,
+  methods: ["GET", "POST", "OPTIONS"],
+  allowedHeaders: [
+    "Content-Type",
+    "Authorization",
+    "x-hedera-session-id",
+    "x-idempotency-key"
+  ],
+  credentials: false
+};
 
-// ⭐ THIS is what you are missing
-app.options("*", cors());
+app.use(cors(corsOptions));
+app.options("*", cors(corsOptions));
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
