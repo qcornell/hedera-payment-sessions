@@ -338,9 +338,26 @@ const corsOrigins = String(env.CORS_ORIGIN ?? "")
   .map((s) => s.trim())
   .filter(Boolean);
 
-// ✅ Reuse the same options for BOTH normal requests and preflight (OPTIONS)
+// ✅ BULLETPROOF CORS: trim BOTH the incoming origin and the allowed list.
+// Also: use the SAME options for app.use + preflight.
 const corsOptions: cors.CorsOptions = {
-  origin: corsOrigins,
+  origin: (origin, cb) => {
+    // allow curl/postman/no-origin
+    if (!origin) return cb(null, true);
+
+    const cleanOrigin = origin.trim();
+
+    // if not configured, allow all (dev-friendly)
+    if (corsOrigins.length === 0) return cb(null, true);
+
+    for (const allowed of corsOrigins) {
+      if (cleanOrigin === allowed.trim()) return cb(null, true);
+    }
+
+    console.log("[CORS] Blocked origin:", origin);
+    // IMPORTANT: don't throw (that can surface as 500). Just deny.
+    return cb(null, false);
+  },
   methods: ["GET", "POST", "OPTIONS"],
   allowedHeaders: [
     "Content-Type",
@@ -348,7 +365,8 @@ const corsOptions: cors.CorsOptions = {
     "x-hedera-session-id",
     "x-idempotency-key"
   ],
-  credentials: false
+  credentials: false,
+  optionsSuccessStatus: 204
 };
 
 app.use(cors(corsOptions));
