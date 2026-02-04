@@ -94,7 +94,10 @@ async function activateSession(params: {
     );
   }
 
-  const existing = await getActiveSessionForUser(userAccountId, spenderAccountId);
+  const existing = await getActiveSessionForUser(
+    userAccountId,
+    spenderAccountId
+  );
 
   if (existing) {
     const upd = await pool.query<SessionRow>(
@@ -333,28 +336,27 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "1mb" }));
 
 // ✅ Support single origin OR comma-separated list in env.CORS_ORIGIN
+// ✅ ALSO normalize trailing slashes to prevent false mismatches.
 const corsOrigins = String(env.CORS_ORIGIN ?? "")
   .split(",")
-  .map((s) => s.trim())
+  .map((s) => s.trim().replace(/\/+$/, "")) // <-- strip trailing /
   .filter(Boolean);
 
-// ✅ BULLETPROOF CORS: trim BOTH the incoming origin and the allowed list.
-// Also: use the SAME options for app.use + preflight.
+// ✅ BULLETPROOF CORS: normalize BOTH the incoming origin and the allowed list.
+// Use SAME options for app.use + preflight.
 const corsOptions: cors.CorsOptions = {
   origin: (origin, cb) => {
     // allow curl/postman/no-origin
     if (!origin) return cb(null, true);
 
-    const cleanOrigin = origin.trim();
+    const cleanOrigin = origin.trim().replace(/\/+$/, ""); // <-- strip trailing /
 
     // if not configured, allow all (dev-friendly)
     if (corsOrigins.length === 0) return cb(null, true);
 
-    for (const allowed of corsOrigins) {
-      if (cleanOrigin === allowed.trim()) return cb(null, true);
-    }
+    if (corsOrigins.includes(cleanOrigin)) return cb(null, true);
 
-    console.log("[CORS] Blocked origin:", origin);
+    console.log("[CORS] Blocked origin:", cleanOrigin);
     // IMPORTANT: don't throw (that can surface as 500). Just deny.
     return cb(null, false);
   },
