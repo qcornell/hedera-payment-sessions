@@ -94,10 +94,7 @@ async function activateSession(params: {
     );
   }
 
-  const existing = await getActiveSessionForUser(
-    userAccountId,
-    spenderAccountId
-  );
+  const existing = await getActiveSessionForUser(userAccountId, spenderAccountId);
 
   if (existing) {
     const upd = await pool.query<SessionRow>(
@@ -336,43 +333,26 @@ app.use(morgan("dev"));
 app.use(express.json({ limit: "1mb" }));
 
 // ✅ Support single origin OR comma-separated list in env.CORS_ORIGIN
-// ✅ ALSO normalize trailing slashes to prevent false mismatches.
 const corsOrigins = String(env.CORS_ORIGIN ?? "")
   .split(",")
-  .map((s) => s.trim().replace(/\/+$/, "")) // <-- strip trailing /
+  .map((s) => s.trim())
   .filter(Boolean);
 
-// ✅ BULLETPROOF CORS: normalize BOTH the incoming origin and the allowed list.
-// Use SAME options for app.use + preflight.
-const corsOptions: cors.CorsOptions = {
-  origin: (origin, cb) => {
-    // allow curl/postman/no-origin
-    if (!origin) return cb(null, true);
+app.use(
+  cors({
+    origin: (origin, cb) => {
+      // allow curl/postman/no-origin
+      if (!origin) return cb(null, true);
 
-    const cleanOrigin = origin.trim().replace(/\/+$/, ""); // <-- strip trailing /
+      // if not configured, allow all (dev-friendly)
+      if (corsOrigins.length === 0) return cb(null, true);
 
-    // if not configured, allow all (dev-friendly)
-    if (corsOrigins.length === 0) return cb(null, true);
-
-    if (corsOrigins.includes(cleanOrigin)) return cb(null, true);
-
-    console.log("[CORS] Blocked origin:", cleanOrigin);
-    // IMPORTANT: don't throw (that can surface as 500). Just deny.
-    return cb(null, false);
-  },
-  methods: ["GET", "POST", "OPTIONS"],
-  allowedHeaders: [
-    "Content-Type",
-    "Authorization",
-    "x-hedera-session-id",
-    "x-idempotency-key"
-  ],
-  credentials: false,
-  optionsSuccessStatus: 204
-};
-
-app.use(cors(corsOptions));
-app.options("*", cors(corsOptions));
+      if (corsOrigins.includes(origin)) return cb(null, true);
+      return cb(new Error(`CORS blocked: ${origin}`));
+    },
+    credentials: true
+  })
+);
 
 app.get("/health", (_req, res) => res.json({ ok: true }));
 
